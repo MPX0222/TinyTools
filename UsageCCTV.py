@@ -73,6 +73,13 @@ class SystemMonitor(tk.Toplevel):
         y = self.winfo_y() + deltay
         self.geometry("+{}+{}".format(x, y))
 
+    # 按照内存使用量排序，并排除进程停止的问题
+    def get_process_memory(self, process):
+        try:
+            return process.memory_info().rss
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            return 0
+
     def read_pid(self):
         processes = []
         for pid in psutil.pids():
@@ -83,7 +90,7 @@ class SystemMonitor(tk.Toplevel):
                 pass
 
         # 按照内存使用量排序
-        processes = sorted(processes, key=lambda p: p.memory_info().rss, reverse=True)
+        processes = sorted(processes, key=self.get_process_memory, reverse=True)
         top_dict = []
 
         # 获取前5个进程的信息并输出
